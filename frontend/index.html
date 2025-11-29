@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agora - Multi-LLM θ-Logos Conversation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #fff;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+        
+        .controls {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .theta-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #333;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 2px solid #444;
+        }
+        
+        .theta-toggle.active {
+            border-color: #4CAF50;
+            background: #2d4a2e;
+        }
+        
+        .theta-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .theta-toggle label {
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .theta-symbol {
+            font-size: 1.2em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .theta-info {
+            font-size: 0.85em;
+            color: #888;
+            margin-left: 10px;
+        }
+        
+        .theta-mode {
+            background: #333;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #aaa;
+        }
+        
+        .theta-mode.active {
+            color: #4CAF50;
+        }
+        
+        .chat-area {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .message.user {
+            background: #1e3a5f;
+            margin-left: 0;
+            margin-right: 20%;
+        }
+        
+        .message.assistant {
+            background: #2d2d2d;
+            margin-left: 20%;
+            margin-right: 0;
+            border-left: 4px solid #444;
+        }
+        
+        .message.claude {
+            border-left-color: #8B4513;
+        }
+        
+        .message.gpt {
+            border-left-color: #10A37F;
+        }
+        
+        .message.gemini {
+            border-left-color: #4285F4;
+        }
+        
+        .message.grok {
+            border-left-color: #000000;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            color: #888;
+        }
+        
+        .model-name {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .model-name.claude { color: #D2691E; }
+        .model-name.gpt { color: #10A37F; }
+        .model-name.gemini { color: #4285F4; }
+        .model-name.grok { color: #666; }
+        
+        .tokens {
+            color: #666;
+        }
+        
+        .theta-badge {
+            background: #2d4a2e;
+            color: #4CAF50;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .message-content {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .order-display {
+            background: #333;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .order-display strong {
+            color: #4CAF50;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            font-size: 1em;
+            font-family: inherit;
+        }
+        
+        #messageInput:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        button {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            background: #4CAF50;
+            color: white;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary {
+            background: #555;
+        }
+        
+        .btn-secondary:hover {
+            background: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Agora</h1>
+        <div class="subtitle">Multi-LLM Conversational System with θ-Logos Support</div>
+        
+        <div class="controls">
+            <div class="theta-toggle" id="thetaToggle">
+                <input type="checkbox" id="thetaCheckbox">
+                <label for="thetaCheckbox">
+                    <span class="theta-symbol">θ</span>
+                    <span>Enable θ-Logos Mode</span>
+                </label>
+            </div>
+            <div class="theta-mode" id="thetaMode">
+                Mode: <span id="thetaModeValue">Extended v1.2</span>
+            </div>
+            <div class="theta-info" id="thetaInfo">
+                LLMs respond in θ-Logos notation
+            </div>
+        </div>
+        
+        <div class="chat-area" id="chatArea">
+            <div style="text-align: center; color: #666; padding: 40px;">
+                <p>Welcome to Agora</p>
+                <p style="margin-top: 10px; font-size: 0.9em;">Start a conversation with multiple LLMs</p>
+                <p style="margin-top: 20px; font-size: 0.85em;">
+                    Enable θ-Logos mode to have LLMs respond using symbolic notation<br>
+                    (User writes in natural language, LLMs respond in θ-Logos)
+                </p>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Type your message... (natural language)"
+                autocomplete="off"
+            >
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+        
+        <div class="actions">
+            <button class="btn-secondary" onclick="exportConversation()">Export JSON</button>
+            <button class="btn-secondary" onclick="resetConversation()">Reset</button>
+            <button class="btn-secondary" onclick="showDiagnostics()">Diagnostics</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let isLoading = false;
+        
+        // θ-Logos toggle handling
+        const thetaCheckbox = document.getElementById('thetaCheckbox');
+        const thetaToggle = document.getElementById('thetaToggle');
+        const thetaInfo = document.getElementById('thetaInfo');
+        
+        thetaCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                thetaToggle.classList.add('active');
+                thetaInfo.textContent = 'θ-Logos ACTIVE: LLMs will respond in symbolic notation';
+                thetaInfo.style.color = '#4CAF50';
+            } else {
+                thetaToggle.classList.remove('active');
+                thetaInfo.textContent = 'LLMs respond in natural language';
+                thetaInfo.style.color = '#888';
+            }
+        });
+        
+        // Enter key to send
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !isLoading) {
+                sendMessage();
+            }
+        });
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || isLoading) return;
+            
+            const thetaEnabled = thetaCheckbox.checked;
+            
+            // Disable input
+            isLoading = true;
+            document.getElementById('sendButton').disabled = true;
+            input.disabled = true;
+            
+            // Display user message
+            appendMessage('user', 'You', message, 0, thetaEnabled);
+            input.value = '';
+            
+            // Show loading
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading';
+            loadingDiv.id = 'loading';
+            loadingDiv.innerHTML = '<div class="spinner"></div><p>LLMs are responding...</p>';
+            document.getElementById('chatArea').appendChild(loadingDiv);
+            scrollToBottom();
+            
+            try {
+                const response = await fetch(`${API_URL}/message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        content: message,
+                        theta_enabled: thetaEnabled
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Remove loading
+                document.getElementById('loading').remove();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                // Show order
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'order-display';
+                orderDiv.innerHTML = `<strong>Order:</strong> ${data.order.join(' → ')}`;
+                document.getElementById('chatArea').appendChild(orderDiv);
+                
+                // Display responses
+                data.responses.forEach(resp => {
+                    appendMessage('assistant', resp.model, resp.content, resp.tokens, thetaEnabled);
+                });
+                
+                scrollToBottom();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to send message: ' + error.message);
+                document.getElementById('loading')?.remove();
+            } finally {
+                isLoading = false;
+                document.getElementById('sendButton').disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+        
+        function appendMessage(type, sender, content, tokens, thetaEnabled) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type} ${sender.toLowerCase()}`;
+            
+            let headerHTML = `<div class="message-header">`;
+            if (type === 'user') {
+                headerHTML += `<span class="model-name">You</span>`;
+                if (thetaEnabled) {
+                    headerHTML += `<span class="theta-badge">θ Mode</span>`;
+                }
+            } else {
+                headerHTML += `<span class="model-name ${sender}">${sender.toUpperCase()}</span>`;
+                headerHTML += `<span class="tokens">${tokens} tokens</span>`;
+            }
+            headerHTML += `</div>`;
+            
+            messageDiv.innerHTML = headerHTML + `<div class="message-content">${escapeHtml(content)}</div>`;
+            chatArea.appendChild(messageDiv);
+        }
+        
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function exportConversation() {
+            try {
+                window.open(`${API_URL}/export`, '_blank');
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Failed to export conversation');
+            }
+        }
+        
+        async function resetConversation() {
+            if (!confirm('Reset conversation? This will clear all messages.')) {
+                return;
+            }
+            
+            try {
+                await fetch(`${API_URL}/reset`, { method: 'POST' });
+                document.getElementById('chatArea').innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 40px;">
+                        <p>Conversation reset</p>
+                        <p style="margin-top: 10px; font-size: 0.9em;">Start a new conversation</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Reset error:', error);
+                alert('Failed to reset conversation');
+            }
+        }
+        
+        async function showDiagnostics() {
+            try {
+                const response = await fetch(`${API_URL}/diagnostics`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                let diagnostics = `AGORA DIAGNOSTICS\n\n`;
+                diagnostics += `Total Rounds: ${data.total_rounds}\n`;
+                diagnostics += `User Rounds: ${data.user_rounds}\n`;
+                diagnostics += `LLM Rounds: ${data.llm_rounds}\n`;
+                diagnostics += `θ-Logos Rounds: ${data.theta_rounds || 0}\n`;
+                diagnostics += `Hallucinations Detected: ${data.hallucinations_detected}\n\n`;
+                
+                diagnostics += `PER MODEL:\n`;
+                for (const [model, stats] of Object.entries(data.model_stats)) {
+                    diagnostics += `\n${model.toUpperCase()}:\n`;
+                    diagnostics += `  Rounds: ${stats.total_rounds}\n`;
+                    diagnostics += `  Tokens: ${stats.total_tokens}\n`;
+                    diagnostics += `  Errors: ${stats.errors}\n`;
+                    diagnostics += `  Hallucinations: ${stats.hallucinations}\n`;
+                    diagnostics += `  θ-Logos: ${stats.theta_rounds || 0}\n`;
+                }
+                
+                alert(diagnostics);
+                
+            } catch (error) {
+                console.error('Diagnostics error:', error);
+                alert('Failed to get diagnostics');
+            }
+        }
+    </script>
+</body>
+</html>
